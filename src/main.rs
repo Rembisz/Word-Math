@@ -1,26 +1,57 @@
-fn clean_num_chars(inst: &str) -> Vec<f32> {
-    let sortee: Vec<char> = inst.chars().collect();
-    let mut result = Vec::new();
-    for item in sortee {
-        match 0 as u32 + item.to_digit(10).unwrap() {
-            Ok(r) => result.push(item as f32),
-            Err(_) => (),
+fn clean_num_chars(str: &str) -> f32 {
+    let sort_vec: Vec<char> = str.chars().collect();
+    let mut result = 0.0;
+    for item in &sort_vec {
+        match item.to_digit(10) {
+            Some(_) => result = result * 10.0 + item.to_digit(10).unwrap() as f32,
+            None => {
+                if item == &'.' {
+                    let mut dec_whole: Vec<u32> = Vec::new();
+                    let mut dec_per: Vec<u32> = Vec::new();
+                    let mut dec_pos = false;
+                    for item in &sort_vec {
+                        match item.to_digit(10) {
+                            Some(_) => {
+                                if dec_pos == false {
+                                    dec_whole.push(item.to_digit(10).unwrap())
+                                } else if dec_pos == true {
+                                    dec_whole.push(item.to_digit(10).unwrap());
+                                    dec_per.push(item.to_digit(10).unwrap())
+                                }
+                            }
+                            None => {
+                                if item == &'.' {
+                                    dec_pos = true;
+                                }
+                            }
+                        }
+                        let mut count = 0;
+                        let mut dec_shift = 1.0;
+                        while count != dec_per.len() {
+                            count += 1;
+                            dec_shift = dec_shift * 10.0;
+                        }
+                        result = (dec_whole.iter().fold(0, |acc, elem| acc * 10 + elem) as f32)
+                            / (dec_shift);
+                    }
+                }
+            }
         }
     }
     return result;
 }
 
-fn parse_words(exp: &String) -> Vec<f32> {
-    let words: Vec<&str> = exp.trim().split(" ").collect();
+fn parse_words(entry: &String) -> Vec<f32> {
+    let words: Vec<&str> = entry.trim().split(" ").collect();
     let mut nums: Vec<f32> = Vec::new();
     for str in words {
-        nums = clean_num_chars(str);
+        nums.push(clean_num_chars(str));
     }
     return nums;
 }
 
-fn word_math_convert(exp: String) -> Option<String> {
-    let num_vec: Vec<f32> = parse_words(&exp);
+fn word_math_convert(entry: String) -> Option<String> {
+    let num_vec: Vec<f32> = parse_words(&entry);
 
     let mut validity = 0.0;
     for item in &num_vec {
@@ -44,7 +75,7 @@ fn word_math_convert(exp: String) -> Option<String> {
     }
 
     let mut op_vec: Vec<Operator> = Vec::new();
-    for opcheck in exp.split(" ") {
+    for opcheck in entry.split(" ") {
         match opcheck.as_ref() {
             "plus" | "sum" | "add" | "addition" => op_vec.push(Operator::Plus),
             "minus" | "subtraction" | "subtract" | "difference" => op_vec.push(Operator::Minus),
