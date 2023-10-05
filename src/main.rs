@@ -1,13 +1,18 @@
 fn clean_num_chars(str: &str) -> f32 {
     let sort_vec: Vec<char> = str.chars().collect();
     let mut result = 0.0;
+    let mut dec_active = false;
     for item in &sort_vec {
+        if dec_active {
+            return result;
+        }
         match item.to_digit(10) {
             Some(_) => result = result * 10.0 + item.to_digit(10).unwrap() as f32,
             None => {
                 if item == &'.' {
+                    dec_active = true;
                     let mut dec_whole: Vec<u32> = Vec::new();
-                    let mut dec_per: Vec<u32> = Vec::new();
+                    let mut dec_scale: Vec<u32> = Vec::new();
                     let mut dec_pos = false;
                     for item in &sort_vec {
                         match item.to_digit(10) {
@@ -16,7 +21,7 @@ fn clean_num_chars(str: &str) -> f32 {
                                     dec_whole.push(item.to_digit(10).unwrap())
                                 } else if dec_pos == true {
                                     dec_whole.push(item.to_digit(10).unwrap());
-                                    dec_per.push(item.to_digit(10).unwrap())
+                                    dec_scale.push(item.to_digit(10).unwrap())
                                 }
                             }
                             None => {
@@ -27,12 +32,15 @@ fn clean_num_chars(str: &str) -> f32 {
                         }
                         let mut count = 0;
                         let mut dec_shift = 1.0;
-                        while count != dec_per.len() {
+                        while count != dec_scale.len() {
                             count += 1;
                             dec_shift = dec_shift * 10.0;
                         }
                         result = (dec_whole.iter().fold(0, |acc, elem| acc * 10 + elem) as f32)
                             / (dec_shift);
+                        if item == &'|' {
+                            return result;
+                        }
                     }
                 }
             }
@@ -123,6 +131,8 @@ fn main() {
             std::process::exit(1);
         }
     }
+
+    entry = format!("{}|", entry);
 
     match word_math_convert(entry) {
         Some(result) => println!("{}", result),
